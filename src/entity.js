@@ -5,8 +5,7 @@ export default class Entity {
   // setup each point of triangle
   constructor() {
     this.generateNewBoidPosition();
-    this.speed = 2;
-    this.angle = 0;
+    this.speed = 5;
     this.width = 10,
     this.height = 15;
   }
@@ -14,20 +13,30 @@ export default class Entity {
   // generate random starting positions for boids,
   // will be outside of the canvas, and will all be angled differently:
   generateNewBoidPosition() {
-    this.angle = this.randomNumberGenerator();
+    this.angle = this.getRandomInt(-45, 225);
 
-    // if (isBetween(this.angle, 0, 180)) {
-    //   console.log('between...');
-    //   this.x = Math.floor(Math.random() * canvasWidth);
-    //   this.y = -10;
-    // }
-
-    this.x = canvasWidth / 2;
-    this.y = canvasHeight / 2;
+    if (this.isBetween(this.angle, -45, 45)) {
+      this.x = 0;
+      this.y = this.getRandomInt(0, canvasHeight)
+    }
+    else if (this.isBetween(this.angle, 45, 90)) {
+      this.x = this.getRandomInt(0, canvasWidth);
+      this.y = 0;
+    }
+    else if (this.isBetween(this.angle, 90, 135)) {
+      this.x = canvasWidth;
+      this.y = this.getRandomInt(0, canvasHeight);
+    }
+    else if (this.isBetween(this.angle, 135, 225)) {
+      this.x = this.getRandomInt(0, canvasWidth);
+      this.y = canvasHeight;
+    }
   }
 
-  randomNumberGenerator() {
-    return Math.floor(Math.random() * 360);
+  getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min);
   }
 
   isBetween(x, min, max) {
@@ -40,9 +49,15 @@ export default class Entity {
     this.x += Math.cos(this.radians) * this.speed;
     this.y += Math.sin(this.radians) * this.speed;
 
+    // if (this.x - this.width > canvasWidth || 
+    //     this.y + this.height < 0 || this.y - this.height > canvasHeight || 
+    //     this.x + this.width < 0 || 
+    //     this.y + this.height < 0 || this.y - this.height > canvasHeight) {
+    //   this.generateNewBoidPosition();
+    // }
     // if boid goes off screen, generate a new position for it: 
-    if ((this.x < 0 || this.x > canvasWidth) || 
-         this.y < 0 || this.y > canvasHeight) {
+    if ((this.x + this.width < 0 || this.x - this.width > canvasWidth) || 
+         this.y + this.height < 0 || this.y - this.height > canvasHeight) {
       this.generateNewBoidPosition();
     }
   }
@@ -56,7 +71,8 @@ export default class Entity {
     ctx.lineTo(-this.height, this.width);
     ctx.lineTo(-this.height, -this.width);
     ctx.closePath();
-    ctx.stroke();
+    ctx.fillStyle = 'white';
+    ctx.fill();
     ctx.restore();
   }
 };

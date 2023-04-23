@@ -6,14 +6,23 @@ const ctx = canvas.getContext("2d");
 const canvasWidth = canvas.width;
 const canvasHeight = canvas.height;
 
-// test points:
-const boids = new Entity();
+// populate boids:
+let boids = [];
+for (let i = 0; i < 10; i++) {
+  boids[i] = new Entity();
+}
+
+console.log(boids);
 
 /* main loop */
 (function update() {
   clearScreen();
-  boids.move();
-  boids.draw(ctx);
+
+  boids.forEach(element => {
+    element.move();
+    element.draw(ctx);
+  });
+  
   requestAnimationFrame(update);
 })();
 
