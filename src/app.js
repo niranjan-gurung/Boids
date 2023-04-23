@@ -24,4 +24,4 @@ function clearScreen() {
 }
 
 // exports:
-export { canvasWidth };
+export { canvasWidth, canvasHeight };

@@ -1,47 +1,62 @@
-import { canvasWidth } from "./app.js";
+import { canvasWidth, canvasHeight } from "./app.js";
 
 // singular boid blueprint
 export default class Entity {
   // setup each point of triangle
   constructor() {
-    this.generateStartingPosition();
+    this.generateNewBoidPosition();
+    this.speed = 2;
+    this.angle = 0;
+    this.width = 10,
+    this.height = 15;
   }
-
-  // vec2 array - holds coordinates of 3 different points,
-  // each point represents a corner of a triangle (init to 0 by default):
-  points = [
-    { x: 0, y: 0 },
-    { x: 0, y: 0 },
-    { x: 0, y: 0 }
-  ];
 
   // generate random starting positions for boids,
   // will be outside of the canvas, and will all be angled differently:
-  // hardcoded for now - testing
-  generateStartingPosition() {
-    this.points[0].x = 0;   this.points[0].y = 50;
-    this.points[1].x = -50; this.points[1].y = 75;
-    this.points[2].x = -50; this.points[2].y = 25;
+  generateNewBoidPosition() {
+    this.angle = this.randomNumberGenerator();
+
+    // if (isBetween(this.angle, 0, 180)) {
+    //   console.log('between...');
+    //   this.x = Math.floor(Math.random() * canvasWidth);
+    //   this.y = -10;
+    // }
+
+    this.x = canvasWidth / 2;
+    this.y = canvasHeight / 2;
   }
-  
+
+  randomNumberGenerator() {
+    return Math.floor(Math.random() * 360);
+  }
+
+  isBetween(x, min, max) {
+    return x >= min && x <= max;
+  }
+
   move() {
-    // testing only x direction right now:
-    this.points[0].x += 2.0;
-    this.points[1].x += 2.0;
-    this.points[2].x += 2.0;
+    this.radians = this.angle * Math.PI / 180;
+
+    this.x += Math.cos(this.radians) * this.speed;
+    this.y += Math.sin(this.radians) * this.speed;
 
     // if boid goes off screen, generate a new position for it: 
-    if ((this.points[1].x || this.points[2].x) > canvasWidth) {
-      this.generateStartingPosition();
+    if ((this.x < 0 || this.x > canvasWidth) || 
+         this.y < 0 || this.y > canvasHeight) {
+      this.generateNewBoidPosition();
     }
   }
 
   draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.radians);
     ctx.beginPath();
-    ctx.moveTo(this.points[0].x, this.points[0].y);
-    ctx.lineTo(this.points[1].x, this.points[1].y);
-    ctx.lineTo(this.points[2].x, this.points[2].y);
+    ctx.moveTo(this.height, 0);
+    ctx.lineTo(-this.height, this.width);
+    ctx.lineTo(-this.height, -this.width);
     ctx.closePath();
     ctx.stroke();
+    ctx.restore();
   }
 };
