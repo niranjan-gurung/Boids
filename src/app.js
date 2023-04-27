@@ -12,12 +12,10 @@ for (let i = 0; i < 10; i++) {
   boids[i] = new Entity();
 }
 
-console.log(boids);
-
 /* main loop */
 (function update() {
   clearScreen();
-
+  
   boids.forEach(element => {
     element.move();
     element.draw(ctx);
