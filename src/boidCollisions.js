@@ -1,52 +1,36 @@
 export function insideViewAngle(boids) {
-  // check if boid comes within the view angle defined (ignore if not)
-  //let distance = distanceBetweenBoids(boids[0], boids[1]);
-  
+  // distance between 2 boids:
+  // vecA:
   let dx = (boids[1].x) - (boids[0].x);
   let dy = (boids[1].y) - (boids[0].y); 
   let distance = Math.sqrt(dx*dx + dy*dy);
 
-  dx /= distance;
-  dy /= distance;
+  // normalise vecA:
+  dx /= distance, dy /= distance;
 
   const boidAngle = boids[0].radians;
-  const boidRadius = 100;
-  const boidViewAngle = 1;
+  const boidRadius = 100.0;
+  const boidViewAngle = 1.0;
 
+  // get main boid's current direction:
+  // vecB:
+  let currentBoidDir = {
+    x: Math.cos(boidAngle), 
+    y: Math.sin(boidAngle),
+  };
 
-  let arcStartX = Math.sin(boidAngle);
-  let arcStartY = -Math.cos(boidAngle);
-  arcStartX /= distance;
-  arcStartY /= distance;
+  // dot product between vecA and vecB:
+  let dot = dx*currentBoidDir.x + dy*currentBoidDir.y;
 
-  // dot product:
-  //let dp = dx*bx + dx*by;
-  let dp = arcStartX*dx + arcStartY*dy;
-
-  let arcLength = boidViewAngle/2;
-
+  // check if boid is within other's radius:
   let isInsideRadius = distance < boidRadius;
-  //let isInsideAngle = Math.acos(dx*bx + dy*by) < arcLength;
-  let isInsideAngle = Math.abs(Math.acos(dp)) < boidViewAngle;
+  // check if boid comes within the view angle defined:
+  let isInsideAngle = Math.abs(Math.acos(dot)) < boidViewAngle;
   let isInsideArc = isInsideRadius && isInsideAngle;
-  // detects if boid is within its circle radius!
-  // doesn't detect if boid is within the view angle
-  if (isInsideArc) {
-    return true;
-  }
-}
 
-// export function drawOutline(boids, ctx) {
-//   const boidAngle = boids[1].radians;
-//   const boidRadius = boids[1].radius;
-//   const boidViewAngle = boids[1].viewAngle;
-//   ctx.beginPath();
-//   ctx.moveTo(boids[1].x, boids[1].y);
-//   ctx.arc(boids[1].x, boids[1].y, boidRadius, boidAngle-boidViewAngle, boidAngle+boidViewAngle);
-//   ctx.strokeStyle = "black";
-//   ctx.closePath();
-//   ctx.stroke();
-// }
+  // only true if boid is within other's radius AND view angle:
+  if (isInsideArc) return true;
+}
 
 export function drawDetectionLines(boids, ctx) {
   ctx.beginPath();
@@ -54,10 +38,4 @@ export function drawDetectionLines(boids, ctx) {
   ctx.lineTo(boids[1].x, boids[1].y);
   ctx.strokeStyle = "rgba(222, 27, 27, 1)";
   ctx.stroke();
-}
-
-function distanceBetweenBoids(b1, b2) {
-  let dx = (b2.x) - (b1.x);
-  let dy = (b2.y) - (b1.y); 
-  return Math.sqrt(dx*dx + dy*dy);
 }

@@ -81,8 +81,6 @@ export default class Entity {
     ctx.arc(0, 0, this.radius, -this.viewAngle, this.viewAngle, false);
     ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
     ctx.fill();
-    if (this.target) {
-    }
     
     // the boid:
     ctx.beginPath();
@@ -91,7 +89,7 @@ export default class Entity {
     ctx.lineTo(-this.height, -this.width);
     ctx.closePath();
     if (this.target)
-      ctx.fillStyle = 'green';
+      ctx.fillStyle = 'red';
     else 
       ctx.fillStyle = 'white';
     ctx.fill();
