@@ -5,11 +5,11 @@ export default class Entity {
   // setup each point of triangle
   constructor() {
     this.generateNewBoidPosition();
-    this.speed = 1;
+    this.speed = 2.0;
     this.width = 8,
     this.height = 10;
-    this.radius = 100;    // boid view angle radius
-    this.viewAngle = this.toRadians(100);
+    this.radius = 100.0;    // boid view angle radius
+    this.viewAngle = 1.0;
     this.target = false;
   }
 
@@ -78,7 +78,7 @@ export default class Entity {
     // boid's view angle:
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, this.radius, -this.viewAngle, this.viewAngle);
+    ctx.arc(0, 0, this.radius, -this.viewAngle, this.viewAngle, false);
     ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
     ctx.fill();
     if (this.target) {
@@ -91,7 +91,7 @@ export default class Entity {
     ctx.lineTo(-this.height, -this.width);
     ctx.closePath();
     if (this.target)
-      ctx.fillStyle = 'red';
+      ctx.fillStyle = 'green';
     else 
       ctx.fillStyle = 'white';
     ctx.fill();
