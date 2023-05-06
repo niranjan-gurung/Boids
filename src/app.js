@@ -27,7 +27,9 @@ boids[0].target = true;
   if (insideViewAngle(boids)) {
     // red line connection:
     drawDetectionLines(boids, ctx);
+
     // change direction...
+    boids[0].insideViewAngle = true;
   }
   
   requestAnimationFrame(update);

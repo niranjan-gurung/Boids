@@ -10,6 +10,8 @@ export default class Entity {
     this.height = 10;
     this.radius = 100.0;    // boid view angle radius
     this.viewAngle = 1.0;
+    this.insideViewAngle = false;
+    this.turnOffSet = 5.0;
     this.target = false;
   }
 
@@ -60,20 +62,31 @@ export default class Entity {
   move() {
     this.radians = this.toRadians(this.angle);
 
-    this.x += Math.cos(this.radians) * this.speed;
-    this.y += Math.sin(this.radians) * this.speed;
+    if (this.insideViewAngle) {
+      this.x += Math.cos((this.radians + this.turnOffSet)) * this.speed;
+      this.y += Math.sin((this.radians + this.turnOffSet)) * this.speed;
+    } 
+    else {
+      this.x += Math.cos(this.radians) * this.speed;
+      this.y += Math.sin(this.radians) * this.speed;
+    }
 
     // if boid goes off screen, generate a new position for it:
     if ((this.x + this.width < 0 || this.x - this.width > canvasWidth) ||
          this.y + this.height < 0 || this.y - this.height > canvasHeight) {
       this.generateNewBoidPosition();
+      this.insideViewAngle = false;
     }
   }
 
   draw(ctx) {
     ctx.save();
     ctx.translate(this.x, this.y);
-    ctx.rotate(this.radians);
+    
+    if (this.insideViewAngle)
+      ctx.rotate((this.radians + this.turnOffSet));
+    else 
+      ctx.rotate(this.radians);
     
     // boid's view angle:
     ctx.beginPath();
