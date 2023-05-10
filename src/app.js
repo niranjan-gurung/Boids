@@ -29,7 +29,10 @@ boids[0].target = true;
     // red line connection:
     drawDetectionLines(boids, ctx);
     // change direction...
-    //boids[0].isInsideViewAngle = true;
+    boids[0].isInsideViewAngle = true;
+  }
+  else {
+    boids[0].isInsideViewAngle = false;
   }
   
   requestAnimationFrame(update);

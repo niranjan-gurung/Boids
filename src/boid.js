@@ -10,8 +10,8 @@ export default class Boid {
     this.height = 10;
     this.radius = 100.0;    // boid view angle radius
     this.viewAngle = 1.0;
-    //this.isInsideViewAngle = false;
-    this.turnOffSet = 5.0;
+    this.isInsideViewAngle = false;
+    this.turnForce = 0.02;
     this.target = false;
   }
 
@@ -19,6 +19,7 @@ export default class Boid {
   // will be outside of the canvas, and will all be angled differently:
   generateNewBoidPosition() {
     this.angle = this.getRandomNumber(-45, 315);
+    this.radians = this.toRadians(this.angle);
 
     // facing east:
     if (this.isBetween(this.angle, -45, 45)) {
@@ -60,26 +61,27 @@ export default class Boid {
   }
 
   update() {
-    this.radians = this.toRadians(this.angle);
-    //this.angle += 0.02;
-    
-    this.x += Math.cos(this.radians) * this.speed;
-    this.y += Math.sin(this.radians) * this.speed;
-    //this.x += Math.cos(this.angle) * this.speed;
-    //this.y += Math.sin(this.angle) * this.speed;
-    
+    if (this.isInsideViewAngle) {
+      this.radians += this.turnForce;
+      this.x += Math.cos(this.radians) * this.speed;
+      this.y += Math.sin(this.radians) * this.speed;
+    }
+    else {
+      this.x += Math.cos(this.radians) * this.speed;
+      this.y += Math.sin(this.radians) * this.speed;
+    }
+
     // if boid goes off screen, generate a new position for it:
     if ((this.x + this.width < 0 || this.x - this.width > canvasWidth) ||
     this.y + this.height < 0 || this.y - this.height > canvasHeight) {
       this.generateNewBoidPosition();
-      //this.isInsideViewAngle = false;
+      this.isInsideViewAngle = false;
     }
   }
     
   rotateBoid(ctx) {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.radians);
-    //ctx.rotate(this.angle);
   }
   
   draw(ctx) {

@@ -12,7 +12,7 @@ export function insideViewAngle(boids) {
   
   const currentBoidAngle = boids[0].radians;
   const otherBoidAngle = boids[1].radians;
-  const perceptionRadius = 90.0;
+  const perceptionRadius = 95.0;
   const boidViewAngle = 1.0;
   
   // get main boid's current direction:
