@@ -1,7 +1,7 @@
-import { canvasWidth, canvasHeight } from "./app.js";
+import { canvasWidth, canvasHeight } from './app.js';
 
 // singular boid blueprint
-export default class Entity {
+export default class Boid {
   // setup each point of triangle
   constructor() {
     this.generateNewBoidPosition();
@@ -10,7 +10,7 @@ export default class Entity {
     this.height = 10;
     this.radius = 100.0;    // boid view angle radius
     this.viewAngle = 1.0;
-    this.insideViewAngle = false;
+    //this.isInsideViewAngle = false;
     this.turnOffSet = 5.0;
     this.target = false;
   }
@@ -59,41 +59,40 @@ export default class Entity {
     return degree * Math.PI / 180;
   }
 
-  move() {
+  update() {
     this.radians = this.toRadians(this.angle);
-
-    if (this.insideViewAngle) {
-      this.x += Math.cos((this.radians + this.turnOffSet)) * this.speed;
-      this.y += Math.sin((this.radians + this.turnOffSet)) * this.speed;
-    } 
-    else {
-      this.x += Math.cos(this.radians) * this.speed;
-      this.y += Math.sin(this.radians) * this.speed;
-    }
-
+    //this.angle += 0.02;
+    
+    this.x += Math.cos(this.radians) * this.speed;
+    this.y += Math.sin(this.radians) * this.speed;
+    //this.x += Math.cos(this.angle) * this.speed;
+    //this.y += Math.sin(this.angle) * this.speed;
+    
     // if boid goes off screen, generate a new position for it:
     if ((this.x + this.width < 0 || this.x - this.width > canvasWidth) ||
-         this.y + this.height < 0 || this.y - this.height > canvasHeight) {
+    this.y + this.height < 0 || this.y - this.height > canvasHeight) {
       this.generateNewBoidPosition();
-      this.insideViewAngle = false;
+      //this.isInsideViewAngle = false;
     }
   }
-
+    
+  rotateBoid(ctx) {
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.radians);
+    //ctx.rotate(this.angle);
+  }
+  
   draw(ctx) {
     ctx.save();
-    ctx.translate(this.x, this.y);
-    
-    if (this.insideViewAngle)
-      ctx.rotate((this.radians + this.turnOffSet));
-    else 
-      ctx.rotate(this.radians);
-    
-    // boid's view angle:
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, this.radius, -this.viewAngle, this.viewAngle, false);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
-    ctx.fill();
+    this.rotateBoid(ctx);
+    //boid's view angle:
+    if (this.target) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, this.radius, -this.viewAngle, this.viewAngle, false);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
+      ctx.fill();
+    }
     
     // the boid:
     ctx.beginPath();
@@ -106,7 +105,6 @@ export default class Entity {
     else 
       ctx.fillStyle = 'white';
     ctx.fill();
-
     ctx.restore();
   }
 };
