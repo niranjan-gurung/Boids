@@ -1,4 +1,8 @@
 export function insideViewAngle(boids) {
+  const currentBoidAngle = boids[0].radians;
+  const perceptionRadius = 100.0;
+  const boidViewAngle = 1.0;
+
   // vecA:
   // - used as the distance between 2 boids.
   // - also gives us direction from 'other' boid to 'main' boid.
@@ -12,12 +16,7 @@ export function insideViewAngle(boids) {
 
   // normalise vecA:
   normalise(diff, dst);
-
-  const currentBoidAngle = boids[0].radians;
-  //const otherBoidAngle = boids[1].radians;
-  const perceptionRadius = 95.0;
-  const boidViewAngle = 1.0;
-
+  
   // get main boid's current direction:
   // vecB:
   let currentBoidDir = {
@@ -37,8 +36,10 @@ export function insideViewAngle(boids) {
   // only true if boid is within other's radius AND view angle:
   if (isInsideArc) {
     // apply opposite direction vector (steer away from other boids):
-    boids[0].x += -diff.dx;
-    boids[0].y += -diff.dy;
+    //boids[0].x += -diff.dx;
+    //boids[0].y += -diff.dy;
+
+    boids[0].dir = -Math.atan2(diff.dy, diff.dx);
     
     /* used for alignment possibly:
      * boid follows nearby boid! 
@@ -47,7 +48,6 @@ export function insideViewAngle(boids) {
     
     // bool flag to trigger direction change...
     boids[0].isInsideViewAngle = true;
-
     return true; 
   }
   else { 

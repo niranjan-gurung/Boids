@@ -5,13 +5,13 @@ export default class Boid {
   // setup each point of triangle
   constructor() {
     this.generateNewBoidPosition();
-    this.speed = 1.0;
+    this.speed = 2.0;
     this.width = 8,
     this.height = 10;
     this.radius = 100.0;    // boid view angle radius
     this.viewAngle = 1.0;
     this.isInsideViewAngle = false;
-    this.turnForce = 0.02;
+    this.dir = 0.0;
     this.target = false;
   }
 
@@ -62,7 +62,7 @@ export default class Boid {
 
   update() {
     if (this.isInsideViewAngle) {
-      //this.radians += this.turnForce;
+      this.radians += this.toRadians(this.dir);
       this.x += Math.cos(this.radians) * this.speed;
       this.y += Math.sin(this.radians) * this.speed;
     }
@@ -85,13 +85,13 @@ export default class Boid {
     ctx.rotate(this.radians);
 
     //boid's view angle:
-    if (this.target) {
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, this.radius, -this.viewAngle, this.viewAngle, false);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
-      ctx.fill();
-    }
+    // if (this.target) {
+    // }
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, this.radius, -this.viewAngle, this.viewAngle, false);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
+    ctx.fill();
     
     // the boid:
     ctx.beginPath();
