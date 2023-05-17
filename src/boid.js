@@ -62,7 +62,10 @@ export default class Boid {
 
   update() {
     if (this.isInsideViewAngle) {
-      this.radians += this.toRadians(this.dir);
+      if (this.dir > Math.PI)
+        this.radians -= this.toRadians(this.dir);
+      else 
+        this.radians += this.toRadians(this.dir);
       this.x += Math.cos(this.radians) * this.speed;
       this.y += Math.sin(this.radians) * this.speed;
     }

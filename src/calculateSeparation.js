@@ -12,7 +12,7 @@ export function insideViewAngle(boids) {
     dy: (boids[1].y) - (boids[0].y),
   };
   // distance between 2 boids:
-  let dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
+  const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
 
   // normalise vecA:
   normalise(diff, dst);
@@ -26,7 +26,7 @@ export function insideViewAngle(boids) {
 
   // dot product between vecA and vecB:
   let dp = dot(diff, currentBoidDir);
-  
+
   // check if boid is within other's radius:
   let isInsideRadius = dst < perceptionRadius;
   // check if boid comes within the view angle defined:
@@ -35,10 +35,7 @@ export function insideViewAngle(boids) {
   
   // only true if boid is within other's radius AND view angle:
   if (isInsideArc) {
-    // apply opposite direction vector (steer away from other boids):
-    //boids[0].x += -diff.dx;
-    //boids[0].y += -diff.dy;
-
+    // dir = opposite distance direction:
     boids[0].dir = -Math.atan2(diff.dy, diff.dx);
     
     /* used for alignment possibly:
