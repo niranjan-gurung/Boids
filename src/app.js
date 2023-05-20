@@ -9,7 +9,7 @@ const canvasHeight = canvas.height;
 
 // populate boids:
 let boids = [];
-for (let i = 0; i < 2; i++) {
+for (let i = 0; i < 5; i++) {
   boids[i] = new Boid();
 }
 boids[0].target = true;
@@ -19,16 +19,17 @@ boids[0].target = true;
   clearScreen();
   
   boids.forEach(element => {
+    element.separation(boids);
     element.update();
     element.draw(ctx);
   });
 
   // if boids are inside each other's view angle *AND* are their direction path are going to collide,
   // then change direction: 
-  if (insideViewAngle(boids)) {
-    // red line connection:
-    drawDetectionLines(boids, ctx);
-  }
+  // if (insideViewAngle(boids)) {
+  //   // red line connection:
+  //   drawDetectionLines(boids, ctx);
+  // }
   
   requestAnimationFrame(update);
 })();

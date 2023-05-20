@@ -8,7 +8,7 @@ export default class Boid {
     this.speed = 2.0;
     this.width = 8,
     this.height = 10;
-    this.radius = 100.0;    // boid view angle radius
+    this.perceptionRadius = 100.0;    // boid view angle radius
     this.viewAngle = 1.0;
     this.isInsideViewAngle = false;
     this.dir = 0.0;
@@ -60,12 +60,64 @@ export default class Boid {
     return degree * Math.PI / 180;
   }
 
+  separation(boids) {
+    for (let other of boids) {
+      const currentBoidRotation = this.radians;
+      // get main boid's current direction:
+      // vecB:
+      let currentBoidDir = {
+        x: Math.cos(currentBoidRotation), 
+        y: Math.sin(currentBoidRotation),
+      };
+
+      let diff = {
+        dx: (other.x) - (this.x),
+        dy: (other.y) - (this.y),
+      };
+      // distance between 2 boids:
+      const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
+      
+      // normalise vecA:
+      normalise(diff, dst);
+
+      // dot product between vecA and vecB:
+      let dp = dot(diff, currentBoidDir);
+
+      // check if boid is within other's radius:
+      let isInsideRadius = dst < this.perceptionRadius;
+      // check if boid comes within the view angle defined:
+      let isInsideAngle = Math.abs(Math.acos(dp)) < this.viewAngle;
+      let isInsideArc = isInsideRadius && isInsideAngle;
+
+      // only true if boid is within other's radius AND view angle:
+      if (isInsideArc) {
+        // dir = opposite distance direction:
+        other.dir = Math.atan2(diff.dy, diff.dx);
+        this.dir = -Math.atan2(diff.dy, diff.dx);
+        
+        /* used for alignment possibly:
+        * boid follows nearby boid! 
+        */
+        // boids[0].radians = Math.atan2(diff.dy, diff.dx); 
+        
+        // bool flag to trigger direction change...
+        other.isInsideViewAngle = true;
+        this.isInsideViewAngle = true;
+      }
+      else { 
+        other.isInsideViewAngle = false;
+        this.isInsideViewAngle = false;
+      }
+    }
+  }
+
   update() {
     if (this.isInsideViewAngle) {
-      if (this.dir > Math.PI)
-        this.radians -= this.toRadians(this.dir);
-      else 
-        this.radians += this.toRadians(this.dir);
+      this.radians += this.toRadians(this.dir);
+      // if (this.dir > Math.PI)
+      //   this.radians -= this.toRadians(this.dir);
+      // else 
+      //   this.radians += this.toRadians(this.dir);
       this.x += Math.cos(this.radians) * this.speed;
       this.y += Math.sin(this.radians) * this.speed;
     }
@@ -92,7 +144,7 @@ export default class Boid {
     // }
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, this.radius, -this.viewAngle, this.viewAngle, false);
+    ctx.arc(0, 0, this.perceptionRadius, -this.viewAngle, this.viewAngle, false);
     ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
     ctx.fill();
     
@@ -110,3 +162,12 @@ export default class Boid {
     ctx.restore();
   }
 };
+
+// utility functions:
+function normalise(vec, dst) {
+  vec.dx /= dst, vec.dy /= dst;
+}
+
+function dot(vec1, vec2) {
+  return vec1.dx*vec2.x + vec1.dy*vec2.y;
+}

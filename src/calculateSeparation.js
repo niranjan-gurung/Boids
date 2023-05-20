@@ -1,55 +1,63 @@
 export function insideViewAngle(boids) {
-  const currentBoidAngle = boids[0].radians;
+  
   const perceptionRadius = 100.0;
   const boidViewAngle = 1.0;
 
-  // vecA:
-  // - used as the distance between 2 boids.
-  // - also gives us direction from 'other' boid to 'main' boid.
-  //    - this is used to turn 'main' boid in opposite direction to 'other' boid.  
-  let diff = {
-    dx: (boids[1].x) - (boids[0].x),
-    dy: (boids[1].y) - (boids[0].y),
-  };
-  // distance between 2 boids:
-  const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
+  for (let i = 0; i < boids.length; i++) {
 
-  // normalise vecA:
-  normalise(diff, dst);
-  
-  // get main boid's current direction:
-  // vecB:
-  let currentBoidDir = {
-    x: Math.cos(currentBoidAngle), 
-    y: Math.sin(currentBoidAngle),
-  };
-
-  // dot product between vecA and vecB:
-  let dp = dot(diff, currentBoidDir);
-
-  // check if boid is within other's radius:
-  let isInsideRadius = dst < perceptionRadius;
-  // check if boid comes within the view angle defined:
-  let isInsideAngle = Math.abs(Math.acos(dp)) < boidViewAngle;
-  let isInsideArc = isInsideRadius && isInsideAngle;
-  
-  // only true if boid is within other's radius AND view angle:
-  if (isInsideArc) {
-    // dir = opposite distance direction:
-    boids[0].dir = -Math.atan2(diff.dy, diff.dx);
+    const currentBoidRotation = boids[i].radians;
+    // get main boid's current direction:
+    // vecB:
+    let currentBoidDir = {
+      x: Math.cos(currentBoidRotation), 
+      y: Math.sin(currentBoidRotation),
+    };
     
-    /* used for alignment possibly:
-     * boid follows nearby boid! 
-     */
-    // boids[0].radians = Math.atan2(diff.dy, diff.dx); 
+    for (let j = 1; j < boids.length; j++) {
+      
+      // vecA:
+      // - used as the distance between 2 boids.
+      // - also gives us direction pointing from 'us' to the 'other' boid.
+      //    - this is used to turn 'us' in opposite direction to 'other' boid. 
+      let diff = {
+        dx: (boids[j].x) - (boids[i].x),
+        dy: (boids[j].y) - (boids[i].y),
+      };
+      // distance between 2 boids:
+      const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
+      
+      // normalise vecA:
+      normalise(diff, dst);
     
-    // bool flag to trigger direction change...
-    boids[0].isInsideViewAngle = true;
-    return true; 
-  }
-  else { 
-    boids[0].isInsideViewAngle = false;
-    return false; 
+      // dot product between vecA and vecB:
+      let dp = dot(diff, currentBoidDir);
+    
+      // check if boid is within other's radius:
+      let isInsideRadius = dst < perceptionRadius;
+      // check if boid comes within the view angle defined:
+      let isInsideAngle = Math.abs(Math.acos(dp)) < boidViewAngle;
+      let isInsideArc = isInsideRadius && isInsideAngle;
+    
+      // only true if boid is within other's radius AND view angle:
+      if (isInsideArc) {
+        // dir = opposite distance direction:
+        boids[j].dir = Math.atan2(diff.dy, diff.dx);
+        boids[i].dir = -Math.atan2(diff.dy, diff.dx);
+        
+        /* used for alignment possibly:
+        * boid follows nearby boid! 
+        */
+        // boids[0].radians = Math.atan2(diff.dy, diff.dx); 
+        
+        // bool flag to trigger direction change...
+        boids[j].isInsideViewAngle = true;
+        boids[i].isInsideViewAngle = true;
+      }
+      else { 
+        boids[j].isInsideViewAngle = false;
+        boids[i].isInsideViewAngle = false;
+      }
+    }
   }
 }
 
