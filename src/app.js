@@ -19,6 +19,7 @@ boids[0].target = true;
   
   
   boids.forEach(element => {
+    element.alignment(boids);
     element.separation(boids);
     element.update();
     element.draw(ctx);

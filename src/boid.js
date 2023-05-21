@@ -8,7 +8,7 @@ export default class Boid {
     this.speed = 2.0;
     this.width = 8,
     this.height = 10;
-    this.perceptionRadius = 100.0;    // boid view angle radius
+    this.perceptionRadius = 100;    // boid view angle radius
     this.perceptionArc = 2.0;
     this.isInsideArc = false;
     this.dirForce = 0.0;
@@ -58,6 +58,56 @@ export default class Boid {
   // degree -> radians conversion:
   toRadians(degree) {
     return degree * Math.PI / 180;
+  }
+
+  alignment(boids) {
+    const currentBoidRotation = this.radians;
+    // get main boid's current direction:
+    // vecB:
+    let currentBoidDir = {
+      x: Math.cos(currentBoidRotation), 
+      y: Math.sin(currentBoidRotation),
+    };
+
+    for (let other of boids) {
+      // don't compare ourselves - skip current loop if so:
+      if (other != this) {
+        // vecA:
+        // - used as the distance between 2 boids.
+        // - also gives us direction pointing from 'us' to the 'other' boid.
+        //    - this is used to turn 'us' in opposite direction to 'other' boid.
+        let diff = {
+          dx: (this.x) - (other.x),
+          dy: (this.y) - (other.y),
+        };
+        // distance between 2 boids:
+        const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
+        
+        // normalise vecA:
+        normalise(diff, dst);
+  
+        // dot product between vecA and vecB:
+        let dp = dot(diff, currentBoidDir);
+  
+        // check if boid is within other's radius:
+        let isInsideRadius = dst < this.perceptionRadius;
+        // check if boid comes within the view angle defined:
+        let isInsideAngle = Math.abs(Math.acos(dp)) < this.perceptionArc;
+        this.isInsideArc = isInsideRadius && isInsideAngle;
+  
+        // only true if boid is within other's radius AND perception arc:
+        if (this.isInsideArc) {
+          // dirForce = opposite distance direction:
+          this.dirForce = Math.atan2(diff.dy, diff.dx);
+          
+          // exit loop early if boid detection == true 
+          // update + draw result: 
+          return this.dirForce;
+        }
+      }
+      else 
+        continue;
+    }
   }
 
   separation(boids) {
@@ -127,6 +177,7 @@ export default class Boid {
 
   update() {
     if (this.isInsideArc) {
+      //this.radians += this.toRadians(this.dirForce);
       if (this.dirForce > Math.PI)
         this.radians -= this.toRadians(this.dirForce);
       else 
