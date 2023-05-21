@@ -1,5 +1,4 @@
 import Boid from './boid.js';
-import { insideViewAngle, drawDetectionLines } from './calculateSeparation.js';
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -9,8 +8,8 @@ const canvasHeight = canvas.height;
 
 // populate boids:
 let boids = [];
-for (let i = 0; i < 5; i++) {
-  boids[i] = new Boid();
+for (let i = 0; i < 20; i++) {
+  boids.push(new Boid());
 }
 boids[0].target = true;
 
@@ -18,18 +17,12 @@ boids[0].target = true;
 (function update() {
   clearScreen();
   
+  
   boids.forEach(element => {
     element.separation(boids);
     element.update();
     element.draw(ctx);
   });
-
-  // if boids are inside each other's view angle *AND* are their direction path are going to collide,
-  // then change direction: 
-  // if (insideViewAngle(boids)) {
-  //   // red line connection:
-  //   drawDetectionLines(boids, ctx);
-  // }
   
   requestAnimationFrame(update);
 })();

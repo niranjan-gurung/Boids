@@ -9,9 +9,9 @@ export default class Boid {
     this.width = 8,
     this.height = 10;
     this.perceptionRadius = 100.0;    // boid view angle radius
-    this.viewAngle = 1.0;
-    this.isInsideViewAngle = false;
-    this.dir = 0.0;
+    this.perceptionArc = 2.0;
+    this.isInsideArc = false;
+    this.dirForce = 0.0;
     this.target = false;
   }
 
@@ -61,63 +61,76 @@ export default class Boid {
   }
 
   separation(boids) {
+    const currentBoidRotation = this.radians;
+    // get main boid's current direction:
+    // vecB:
+    let currentBoidDir = {
+      x: Math.cos(currentBoidRotation), 
+      y: Math.sin(currentBoidRotation),
+    };
+
     for (let other of boids) {
-      const currentBoidRotation = this.radians;
-      // get main boid's current direction:
-      // vecB:
-      let currentBoidDir = {
-        x: Math.cos(currentBoidRotation), 
-        y: Math.sin(currentBoidRotation),
-      };
-
-      let diff = {
-        dx: (other.x) - (this.x),
-        dy: (other.y) - (this.y),
-      };
-      // distance between 2 boids:
-      const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
-      
-      // normalise vecA:
-      normalise(diff, dst);
-
-      // dot product between vecA and vecB:
-      let dp = dot(diff, currentBoidDir);
-
-      // check if boid is within other's radius:
-      let isInsideRadius = dst < this.perceptionRadius;
-      // check if boid comes within the view angle defined:
-      let isInsideAngle = Math.abs(Math.acos(dp)) < this.viewAngle;
-      let isInsideArc = isInsideRadius && isInsideAngle;
-
-      // only true if boid is within other's radius AND view angle:
-      if (isInsideArc) {
-        // dir = opposite distance direction:
-        other.dir = Math.atan2(diff.dy, diff.dx);
-        this.dir = -Math.atan2(diff.dy, diff.dx);
+      // don't compare ourselves - skip current loop if so:
+      if (other != this) {
+        // vecA:
+        // - used as the distance between 2 boids.
+        // - also gives us direction pointing from 'us' to the 'other' boid.
+        //    - this is used to turn 'us' in opposite direction to 'other' boid.
+        let diff = {
+          dx: (other.x) - (this.x),
+          dy: (other.y) - (this.y),
+        };
+        // distance between 2 boids:
+        const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
         
-        /* used for alignment possibly:
-        * boid follows nearby boid! 
-        */
-        // boids[0].radians = Math.atan2(diff.dy, diff.dx); 
-        
-        // bool flag to trigger direction change...
-        other.isInsideViewAngle = true;
-        this.isInsideViewAngle = true;
+        // normalise vecA:
+        normalise(diff, dst);
+  
+        // dot product between vecA and vecB:
+        let dp = dot(diff, currentBoidDir);
+  
+        // check if boid is within other's radius:
+        let isInsideRadius = dst < this.perceptionRadius;
+        // check if boid comes within the view angle defined:
+        let isInsideAngle = Math.abs(Math.acos(dp)) < this.perceptionArc;
+        this.isInsideArc = isInsideRadius && isInsideAngle;
+  
+        // only true if boid is within other's radius AND perception arc:
+        if (this.isInsideArc) {
+          // dirForce = opposite distance direction:
+          this.dirForce = -Math.atan2(diff.dy, diff.dx);
+          
+          /* Drawing detection lines between boids within range:
+           * works here in separation function however...
+           * don't want draw functionality inside separation method. 
+           */
+          // ctx.beginPath();
+          // ctx.moveTo(this.x, this.y);
+          // ctx.lineTo(other.x, other.y);
+          // ctx.strokeStyle = "rgba(222, 27, 27, 1)";
+          // ctx.stroke();
+
+          /* used for alignment possibly:
+           * boid follows nearby boid! 
+           */
+          // boids[0].radians = Math.atan2(diff.dy, diff.dx); 
+          
+          // exit loop early if boid detection == true 
+          // update + draw result: 
+          return this.dirForce;
+        }
       }
-      else { 
-        other.isInsideViewAngle = false;
-        this.isInsideViewAngle = false;
-      }
+      else 
+        continue;
     }
   }
 
   update() {
-    if (this.isInsideViewAngle) {
-      this.radians += this.toRadians(this.dir);
-      // if (this.dir > Math.PI)
-      //   this.radians -= this.toRadians(this.dir);
-      // else 
-      //   this.radians += this.toRadians(this.dir);
+    if (this.isInsideArc) {
+      if (this.dirForce > Math.PI)
+        this.radians -= this.toRadians(this.dirForce);
+      else 
+        this.radians += this.toRadians(this.dirForce);
       this.x += Math.cos(this.radians) * this.speed;
       this.y += Math.sin(this.radians) * this.speed;
     }
@@ -130,7 +143,6 @@ export default class Boid {
     if ((this.x + this.width < 0 || this.x - this.width > canvasWidth) ||
     this.y + this.height < 0 || this.y - this.height > canvasHeight) {
       this.generateNewBoidPosition();
-      this.isInsideViewAngle = false;
     }
   }
     
@@ -140,14 +152,14 @@ export default class Boid {
     ctx.rotate(this.radians);
 
     //boid's view angle:
-    // if (this.target) {
-    // }
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, this.perceptionRadius, -this.viewAngle, this.viewAngle, false);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
-    ctx.fill();
-    
+    if (this.target) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, this.perceptionRadius, -this.perceptionArc, this.perceptionArc, false);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";   // view angle
+      ctx.fill();
+    }
+
     // the boid:
     ctx.beginPath();
     ctx.moveTo(this.height, 0);
