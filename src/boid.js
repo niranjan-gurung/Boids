@@ -5,10 +5,10 @@ export default class Boid {
   // setup each point of triangle
   constructor() {
     this.generateNewBoidPosition();
-    this.speed = 2.0;
+    this.speed = 1.5;
     this.width = 5,
     this.height = 7;
-    this.perceptionRadius = 100;    // boid view angle radius
+    this.perceptionRadius = 50;    // boid view angle radius
     this.perceptionArc = 2.0;
     this.isInsideArc = false;
     this.dirForce = 0.0;
@@ -132,7 +132,6 @@ export default class Boid {
     };
 
     let avgPosition = { x: 0, y: 0 };
-    let total = 0;
 
     for (let other of boids) {
       // don't compare ourselves - skip current loop if so:
@@ -166,8 +165,6 @@ export default class Boid {
           avgPosition.y += other.y;
           avgPosition.x -= this.x;
           avgPosition.y -= this.y;
-          avgPosition.x -= currentBoidDir.x;
-          avgPosition.y -= currentBoidDir.y;
 
           this.dirForce = Math.atan2(avgPosition.y, avgPosition.x);
           // exit loop early if boid detection == true 
@@ -177,9 +174,6 @@ export default class Boid {
       }
       else 
         continue;
-    }
-    if (total > 0) {
-            
     }
   }
 
@@ -222,17 +216,6 @@ export default class Boid {
         if (this.isInsideArc) {
           // dirForce = opposite distance direction:
           this.dirForce = -Math.atan2(diff.dy, diff.dx);
-          
-          /* Drawing detection lines between boids within range:
-           * works here in separation function however...
-           * don't want draw functionality inside separation method. 
-           */
-          // ctx.beginPath();
-          // ctx.moveTo(this.x, this.y);
-          // ctx.lineTo(other.x, other.y);
-          // ctx.strokeStyle = "rgba(222, 27, 27, 1)";
-          // ctx.stroke();
-
           // exit loop early if boid detection == true 
           // update + draw result: 
           return this.dirForce;

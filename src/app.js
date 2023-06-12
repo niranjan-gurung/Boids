@@ -17,7 +17,6 @@ boids[0].target = true;
 (function update() {
   clearScreen();
   
-  
   boids.forEach(element => {
     element.alignment(boids);
     element.cohesion(boids);
