@@ -8,7 +8,7 @@ export default class Boid {
     this.speed = 1.5;
     this.width = 5,
     this.height = 7;
-    this.perceptionRadius = 50;    // boid view angle radius
+    this.perceptionRadius = 80;    // boid view angle radius
     this.perceptionArc = 2.0;
     this.isInsideArc = false;
     this.dirForce = 0.0;
@@ -86,8 +86,8 @@ export default class Boid {
         // - also gives us direction pointing from 'us' to the 'other' boid.
         //    - this is used to turn 'us' in opposite direction to 'other' boid.
         let diff = {
-          dx: (this.x) - (other.x),
-          dy: (this.y) - (other.y),
+          dx: this.x - other.x,
+          dy: this.y - other.y,
         };
         // distance between 2 boids:
         const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
@@ -141,8 +141,8 @@ export default class Boid {
         // - also gives us direction pointing from 'us' to the 'other' boid.
         //    - this is used to turn 'us' in opposite direction to 'other' boid.
         let diff = {
-          dx: (this.x) - (other.x),
-          dy: (this.y) - (other.y),
+          dx: this.x - other.x,
+          dy: this.y - other.y,
         };
         // distance between 2 boids:
         const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
@@ -186,6 +186,8 @@ export default class Boid {
       y: Math.sin(currentBoidRotation),
     };
 
+    let avgPosition = { x: 0, y: 0 };
+
     for (let other of boids) {
       // don't compare ourselves - skip current loop if so:
       if (other != this) {
@@ -194,8 +196,8 @@ export default class Boid {
         // - also gives us direction pointing from 'us' to the 'other' boid.
         //    - this is used to turn 'us' in opposite direction to 'other' boid.
         let diff = {
-          dx: (other.x) - (this.x),
-          dy: (other.y) - (this.y),
+          dx: other.x - this.x,
+          dy: other.y - this.y,
         };
         // distance between 2 boids:
         const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
@@ -214,8 +216,11 @@ export default class Boid {
   
         // only true if boid is within other's radius AND perception arc:
         if (this.isInsideArc) {
+          avgPosition.x += diff.dx;
+          avgPosition.y += diff.dy;
+
           // dirForce = opposite distance direction:
-          this.dirForce = -Math.atan2(diff.dy, diff.dx);
+          this.dirForce = -Math.atan2(avgPosition.y, avgPosition.x);
           // exit loop early if boid detection == true 
           // update + draw result: 
           return this.dirForce;
@@ -228,17 +233,12 @@ export default class Boid {
 
   update() {
     if (this.isInsideArc) {
-      if (this.dirForce > Math.PI)
-        this.radians -= this.toRadians(this.dirForce);
-      else 
-        this.radians += this.toRadians(this.dirForce);
-      this.x += Math.cos(this.radians) * this.speed;
-      this.y += Math.sin(this.radians) * this.speed;
+      (this.dirForce > Math.PI) 
+        ? this.radians -= this.toRadians(this.dirForce) 
+        : this.radians += this.toRadians(this.dirForce);
     }
-    else {
-      this.x += Math.cos(this.radians) * this.speed;
-      this.y += Math.sin(this.radians) * this.speed;
-    }
+    this.x += Math.cos(this.radians) * this.speed;
+    this.y += Math.sin(this.radians) * this.speed;
 
     // if boid goes off screen, generate a new position for it:
     if ((this.x + this.width < 0 || this.x - this.width > canvasWidth) ||
