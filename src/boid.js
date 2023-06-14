@@ -8,10 +8,10 @@ export default class Boid {
     this.speed = 1.5;
     this.width = 5,
     this.height = 7;
-    this.perceptionRadius = 80;    // boid view angle radius
+    this.perceptionRadius = 100;    // boid view angle radius
     this.perceptionArc = 2.0;
     this.isInsideArc = false;
-    this.dirForce = 0.0;
+    this.turnAngle = 0.0;
     this.target = false;
   }
 
@@ -22,8 +22,8 @@ export default class Boid {
     this.radians = this.toRadians(this.angle);
 
     // pos = center of canvas: 
-    this.x = canvasWidth / 2;
-    this.y = canvasHeight / 2;
+    this.x = this.getRandomNumber(0, canvasWidth);
+    this.y = this.getRandomNumber(0, canvasHeight);
   }
 
   // return random angle between -45 and 315:
@@ -40,10 +40,16 @@ export default class Boid {
 
   flock(boids) {
     let alignment = this.alignment(boids);
-    this.dirForce = Math.atan2(alignment.y, alignment.x)
-    this.radians += this.toRadians(this.dirForce);
+    this.turnAngle = Math.atan2(alignment.y, alignment.x)
+    this.radians += this.toRadians(this.turnAngle);
 
-    //let cohesion = this.cohesion(boids);
+    let cohesion = this.cohesion(boids);
+    this.turnAngle = Math.atan2(cohesion.y, cohesion.x)
+    this.radians += this.toRadians(this.turnAngle);
+
+    // let separation = this.cohesion(boids);
+    // this.turnAngle = Math.atan2(separation.y, separation.x)
+    // this.radians += this.toRadians(this.turnAngle);
   }
 
   alignment(boids) {
@@ -101,6 +107,7 @@ export default class Boid {
       else 
         continue;
     }
+
     if (total > 0) {
       steering.x /= total;
       steering.y /= total;
@@ -116,11 +123,12 @@ export default class Boid {
     // get main boid's current direction/velocity:
     // vecB:
     let currentBoidDir = {
-      x: Math.cos(currentBoidRotation), 
-      y: Math.sin(currentBoidRotation),
+      x: Math.cos(currentBoidRotation) * this.speed, 
+      y: Math.sin(currentBoidRotation) * this.speed,
     };
 
-    let avgPosition = { x: 0, y: 0 };
+    let steering = { x: 0, y: 0 };
+    let total = 0;
 
     for (let other of boids) {
       // don't compare ourselves - skip current loop if so:
@@ -150,20 +158,23 @@ export default class Boid {
   
         // only true if boid is within other's radius AND perception arc:
         if (this.isInsideArc) {
-          avgPosition.x += other.x;
-          avgPosition.y += other.y;
-          avgPosition.x -= this.x;
-          avgPosition.y -= this.y;
-
-          this.dirForce = Math.atan2(avgPosition.y, avgPosition.x);
-          // exit loop early if boid detection == true 
-          // update + draw result: 
-          return this.dirForce;
+          steering.x += other.x;
+          steering.y += other.y;
+          total++;
         }
       }
       else 
         continue;
     }
+
+    if (total > 0) {
+      steering.x /= total;
+      steering.y /= total;
+
+      steering.x -= this.x;
+      steering.y -= this.y;
+    }
+    return steering;
   }
 
   separation(boids) {
@@ -171,11 +182,12 @@ export default class Boid {
     // get main boid's current direction:
     // vecB:
     let currentBoidDir = {
-      x: Math.cos(currentBoidRotation), 
-      y: Math.sin(currentBoidRotation),
+      x: Math.cos(currentBoidRotation) * this.speed, 
+      y: Math.sin(currentBoidRotation) * this.speed,
     };
 
-    let avgPosition = { x: 0, y: 0 };
+    let steering = { x: 0, y: 0 };
+    let total = 0;
 
     for (let other of boids) {
       // don't compare ourselves - skip current loop if so:
@@ -205,19 +217,23 @@ export default class Boid {
   
         // only true if boid is within other's radius AND perception arc:
         if (this.isInsideArc) {
-          avgPosition.x += diff.dx;
-          avgPosition.y += diff.dy;
-
-          // dirForce = opposite distance direction:
-          this.dirForce = -Math.atan2(avgPosition.y, avgPosition.x);
-          // exit loop early if boid detection == true 
-          // update + draw result: 
-          return this.dirForce;
+          steering.x += diff.dx;
+          steering.y += diff.dy;
+          total++;
         }
       }
       else 
         continue;
     }
+
+    if (total > 0) {
+      steering.x /= total;
+      steering.y /= total;
+
+      steering.x -= currentBoidDir.x;
+      steering.y -= currentBoidDir.y;
+    }
+    return steering;
   }
 
   update() {
