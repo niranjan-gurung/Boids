@@ -38,24 +38,33 @@ export default class Boid {
     return degree * Math.PI / 180;
   }
 
+  flock(boids) {
+    let alignment = this.alignment(boids);
+    this.dirForce = Math.atan2(alignment.y, alignment.x)
+    this.radians += this.toRadians(this.dirForce);
+
+    //let cohesion = this.cohesion(boids);
+  }
+
   alignment(boids) {
     const currentBoidRotation = this.radians;
     // get main boid's current direction/velocity:
     // vecB:
     let currentBoidDir = {
-      x: Math.cos(currentBoidRotation), 
-      y: Math.sin(currentBoidRotation),
+      x: Math.cos(currentBoidRotation) * this.speed, 
+      y: Math.sin(currentBoidRotation) * this.speed,
     };
 
-    let avgPosition = { x: 0, y: 0 };
+    let steering = { x: 0, y: 0 };
+    let total = 0;
 
     for (let other of boids) {
       const otherBoidRotation = other.radians;
       // get other boid's current direction/velocity:
       // vecB:
       let otherBoidDir = {
-        x: Math.cos(otherBoidRotation), 
-        y: Math.sin(otherBoidRotation),
+        x: Math.cos(otherBoidRotation) * this.speed, 
+        y: Math.sin(otherBoidRotation) * this.speed,
       };
       // don't compare ourselves - skip current loop if so:
       if (other != this) {
@@ -84,20 +93,22 @@ export default class Boid {
   
         // only true if boid is within other's radius AND perception arc:
         if (this.isInsideArc) {
-          avgPosition.x += otherBoidDir.x;
-          avgPosition.y += otherBoidDir.y;
-          avgPosition.x -= currentBoidDir.x;
-          avgPosition.y -= currentBoidDir.y;
-          
-          this.dirForce = Math.atan2(avgPosition.y, avgPosition.x);
-          // exit loop early if boid detection == true 
-          // update + draw result: 
-          return this.dirForce;
+          steering.x += otherBoidDir.x;
+          steering.y += otherBoidDir.y;
+          total++;
         }
       }
       else 
         continue;
     }
+    if (total > 0) {
+      steering.x /= total;
+      steering.y /= total;
+
+      steering.x -= currentBoidDir.x;
+      steering.y -= currentBoidDir.y;
+    }
+    return steering;
   }
 
   cohesion(boids) {
@@ -210,11 +221,6 @@ export default class Boid {
   }
 
   update() {
-    if (this.isInsideArc) {
-      (this.dirForce > Math.PI) 
-        ? this.radians -= this.toRadians(this.dirForce) 
-        : this.radians += this.toRadians(this.dirForce);
-    }
     this.x += Math.cos(this.radians) * this.speed;
     this.y += Math.sin(this.radians) * this.speed;
 
