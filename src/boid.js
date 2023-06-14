@@ -4,7 +4,7 @@ import { canvasWidth, canvasHeight } from './app.js';
 export default class Boid {
   // setup each point of triangle
   constructor() {
-    this.generateNewBoidPosition();
+    this.generateInitialBoidPosition();
     this.speed = 1.5;
     this.width = 5,
     this.height = 7;
@@ -17,30 +17,13 @@ export default class Boid {
 
   // generate random starting positions for boids,
   // will be outside of the canvas, and will all be angled differently:
-  generateNewBoidPosition() {
+  generateInitialBoidPosition() {
     this.angle = this.getRandomNumber(-45, 315);
     this.radians = this.toRadians(this.angle);
 
-    // facing east:
-    if (this.isBetween(this.angle, -45, 45)) {
-      this.x = 0;
-      this.y = this.getRandomNumber(0, canvasHeight)
-    }
-    // facing south:
-    else if (this.isBetween(this.angle, 45, 135)) {
-      this.x = this.getRandomNumber(0, canvasWidth);
-      this.y = 0;
-    }
-    // facing west:
-    else if (this.isBetween(this.angle, 135, 225)) {
-      this.x = canvasWidth;
-      this.y = this.getRandomNumber(0, canvasHeight);
-    }
-    // facing north:
-    else if (this.isBetween(this.angle, 225, 315)) {
-      this.x = this.getRandomNumber(0, canvasWidth);
-      this.y = canvasHeight;
-    }
+    // pos = center of canvas: 
+    this.x = canvasWidth / 2;
+    this.y = canvasHeight / 2;
   }
 
   // return random angle between -45 and 315:
@@ -48,11 +31,6 @@ export default class Boid {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min) + min);
-  }
-
-  // check if generated angle is between a given 90 deg range:
-  isBetween(x, min, max) {
-    return x >= min && x <= max;
   }
 
   // degree -> radians conversion:
@@ -240,11 +218,14 @@ export default class Boid {
     this.x += Math.cos(this.radians) * this.speed;
     this.y += Math.sin(this.radians) * this.speed;
 
-    // if boid goes off screen, generate a new position for it:
-    if ((this.x + this.width < 0 || this.x - this.width > canvasWidth) ||
-    this.y + this.height < 0 || this.y - this.height > canvasHeight) {
-      this.generateNewBoidPosition();
-    }
+    // screen wrapping:
+    // if boid goes off screen, wrap its position to the other side:
+    // horizontal wrap:
+    if      (this.x + this.width < 0)           this.x = canvasWidth + this.width;
+    else if (this.x - this.width > canvasWidth) this.x = 0 - this.width;
+    // vertical wrap:
+    if      (this.y + this.height < 0)            this.y = canvasHeight + this.height;
+    else if (this.y - this.height > canvasHeight) this.y = 0 - this.height;
   }
     
   draw(ctx) {

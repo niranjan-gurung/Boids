@@ -8,7 +8,7 @@ const canvasHeight = canvas.height;
 
 // populate boids:
 let boids = [];
-for (let i = 0; i < 80; i++) {
+for (let i = 0; i < 100; i++) {
   boids.push(new Boid());
 }
 boids[0].target = true;
@@ -19,7 +19,7 @@ boids[0].target = true;
   
   boids.forEach(element => {
     element.alignment(boids);
-    element.cohesion(boids);
+    //element.cohesion(boids);
     //element.separation(boids);
     element.update();
     element.draw(ctx);
