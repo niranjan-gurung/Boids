@@ -39,17 +39,21 @@ export default class Boid {
   }
 
   flock(boids) {
+    const limitTurnForce = 1.1;
+    
+    let separation = this.separation(boids);
+    this.turnAngle = Math.atan2(separation.y, separation.x);
+    this.radians += this.toRadians(this.turnAngle);
+
     let alignment = this.alignment(boids);
-    this.turnAngle = Math.atan2(alignment.y, alignment.x)
+    this.turnAngle = Math.atan2(alignment.y, alignment.x);
+    this.turnAngle /= limitTurnForce;
     this.radians += this.toRadians(this.turnAngle);
-
+    
     let cohesion = this.cohesion(boids);
-    this.turnAngle = Math.atan2(cohesion.y, cohesion.x)
+    this.turnAngle = Math.atan2(cohesion.y, cohesion.x);
+    this.turnAngle /= limitTurnForce;
     this.radians += this.toRadians(this.turnAngle);
-
-    // let separation = this.cohesion(boids);
-    // this.turnAngle = Math.atan2(separation.y, separation.x)
-    // this.radians += this.toRadians(this.turnAngle);
   }
 
   alignment(boids) {
@@ -197,8 +201,8 @@ export default class Boid {
         // - also gives us direction pointing from 'us' to the 'other' boid.
         //    - this is used to turn 'us' in opposite direction to 'other' boid.
         let diff = {
-          dx: other.x - this.x,
-          dy: other.y - this.y,
+          dx: this.x - other.x,
+          dy: this.y - other.y,
         };
         // distance between 2 boids:
         const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
