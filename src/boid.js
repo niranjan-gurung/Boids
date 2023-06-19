@@ -17,7 +17,7 @@ export default class Boid {
     this.angle = this.getRandomNumber(-45, 315);
     this.radians = this.toRadians(this.angle);
 
-    this.maxForce = 5;
+    this.maxForce = 0.01;
 
     // generate random starting positions for boids:
     this.position = { 
@@ -48,9 +48,14 @@ export default class Boid {
     //this.radians += this.toRadians(this.acceleration);
     
     // let cohesion = this.cohesion(boids);
+    // this.acceleration = cohesion;
     // this.turnAngle = Math.atan2(cohesion.y, cohesion.x);
     // this.turnAngle /= limitTurnForce;
     // this.radians += this.toRadians(this.turnAngle);
+  }
+
+  clamp(num, min, max) {
+    return Math.max(min, Math.min(num, max));
   }
 
   alignment(boids) {
@@ -98,25 +103,11 @@ export default class Boid {
       this.sub2DVec(steering, this.velocity);
       let hypot = Math.hypot(steering.x, steering.y);
       this.clamp(hypot, 0, this.maxForce);
-
-      console.log(hypot);
     }
     return steering;
   }
 
-  clamp(num, min, max) {
-    return Math.max(min, Math.min(num, max));
-  }
-
   cohesion(boids) {
-    const currentBoidRotation = this.radians;
-    // get main boid's current direction/velocity:
-    // vecB:
-    let currentBoidDir = {
-      x: Math.cos(currentBoidRotation) * this.speed, 
-      y: Math.sin(currentBoidRotation) * this.speed,
-    };
-
     let steering = { x: 0, y: 0 };
     let total = 0;
 
@@ -128,17 +119,17 @@ export default class Boid {
         // - also gives us direction pointing from 'us' to the 'other' boid.
         //    - this is used to turn 'us' in opposite direction to 'other' boid.
         let diff = {
-          dx: this.position.x - other.position.x,
-          dy: this.position.y - other.position.y,
+          x: this.position.x - other.position.x,
+          y: this.position.y - other.position.y,
         };
         // distance between 2 boids:
-        const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
+        const dst = Math.hypot(diff.x, diff.y);
         
         // normalise vecA:
         normalise(diff, dst);
         
         // dot product between vecA and vecB:
-        let dp = dot(diff, currentBoidDir);
+        let dp = dot(diff, this.velocity);
   
         // check if boid is within other's radius:
         let isInsideRadius = dst < this.perceptionRadius;
@@ -148,8 +139,7 @@ export default class Boid {
   
         // only true if boid is within other's radius AND perception arc:
         if (this.isInsideArc) {
-          steering.x += other.x;
-          steering.y += other.y;
+          this.add2DVec(steering, other.position);
           total++;
         }
       }
@@ -158,11 +148,12 @@ export default class Boid {
     }
 
     if (total > 0) {
-      steering.x /= total;
-      steering.y /= total;
-
-      steering.x -= this.x;
-      steering.y -= this.y;
+      normalise(steering, total);
+      this.sub2DVec(steering, this.position);
+      this.sub2DVec(steering, this.velocity);
+      
+      let hypot = Math.hypot(steering.x, steering.y);
+      this.clamp(hypot, 0, this.maxForce);
     }
     return steering;
   }
