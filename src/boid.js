@@ -9,7 +9,6 @@ export default class Boid {
     this.height = 7;
     this.perceptionRadius = 100;    // boid view angle radius
     this.perceptionArc = 2.0;
-    this.isInsideArc = false;
     this.turnAngle = 0.0;
     this.target = false;
 
@@ -17,7 +16,14 @@ export default class Boid {
     this.angle = this.getRandomNumber(-45, 315);
     this.radians = this.toRadians(this.angle);
 
-    this.maxForce = 0.01;
+    /* tunable forces */
+    // boid behaviour:
+    this.avoidForce = 0.01;    // separation force
+    this.alignForce = 1.2;    // alignment force
+    this.centerForce = 0.001;   // cohesion force
+
+    this.maxSpeed = 0.8;
+    this.maxForce = 0.1;
 
     // generate random starting positions for boids:
     this.position = { 
@@ -27,35 +33,32 @@ export default class Boid {
 
     // set velocity of each boid based on its direction:
     this.velocity = { 
-      x: Math.cos(this.radians) * this.speed,
-      y: Math.sin(this.radians) * this.speed 
+      x: Math.cos(this.radians),
+      y: Math.sin(this.radians) 
     };
-    
+
     this.acceleration = { x: 0, y: 0 };
   }
 
   flock(boids) {
-    const limitTurnForce = 1.1;
-    
-    // let separation = this.separation(boids);
-    // this.turnAngle = Math.atan2(separation.y, separation.x);
-    // this.radians += this.toRadians(this.turnAngle);
-
+    let separation = this.separation(boids);
     let alignment = this.alignment(boids);
-    this.acceleration = alignment;
-    //this.turnAngle = Math.atan2(alignment.y, alignment.x);
-    //this.turnAngle /= limitTurnForce;
-    //this.radians += this.toRadians(this.acceleration);
-    
-    // let cohesion = this.cohesion(boids);
-    // this.acceleration = cohesion;
-    // this.turnAngle = Math.atan2(cohesion.y, cohesion.x);
-    // this.turnAngle /= limitTurnForce;
+    let cohesion = this.cohesion(boids);
+    this.acceleration.x += separation.x * this.avoidForce;
+    this.acceleration.y += separation.y * this.avoidForce;
+    // this.acceleration.x += alignment.x * this.alignForce;
+    // this.acceleration.y += alignment.y * this.alignForce;
+    this.acceleration.x += cohesion.x * this.centerForce;
+    this.acceleration.y += cohesion.y * this.centerForce;
+    // this.turnAngle = Math.atan2(this.acceleration.y, this.acceleration.x);
     // this.radians += this.toRadians(this.turnAngle);
   }
 
-  clamp(num, min, max) {
-    return Math.max(min, Math.min(num, max));
+  clampVec(num, min, max) {
+    return { 
+      x: Math.max(min, Math.min(num.x, max)), 
+      y: Math.max(min, Math.min(num.y, max)) 
+    };
   }
 
   alignment(boids) {
@@ -86,10 +89,10 @@ export default class Boid {
         let isInsideRadius = dst < this.perceptionRadius;
         // check if boid comes within the view angle defined:
         let isInsideAngle = Math.abs(Math.acos(dp)) < this.perceptionArc;
-        this.isInsideArc = isInsideRadius && isInsideAngle;
+        let isInsideArc = isInsideRadius && isInsideAngle;
   
         // only true if boid is within other's radius AND perception arc:
-        if (this.isInsideArc) {
+        if (isInsideArc) {
           this.add2DVec(steering, other.velocity);
           total++;
         }
@@ -101,8 +104,6 @@ export default class Boid {
     if (total > 0) {
       normalise(steering, total);
       this.sub2DVec(steering, this.velocity);
-      let hypot = Math.hypot(steering.x, steering.y);
-      this.clamp(hypot, 0, this.maxForce);
     }
     return steering;
   }
@@ -135,10 +136,10 @@ export default class Boid {
         let isInsideRadius = dst < this.perceptionRadius;
         // check if boid comes within the view angle defined:
         let isInsideAngle = Math.abs(Math.acos(dp)) < this.perceptionArc;
-        this.isInsideArc = isInsideRadius && isInsideAngle;
+        let isInsideArc = isInsideRadius && isInsideAngle;
   
         // only true if boid is within other's radius AND perception arc:
-        if (this.isInsideArc) {
+        if (isInsideArc) {
           this.add2DVec(steering, other.position);
           total++;
         }
@@ -151,22 +152,11 @@ export default class Boid {
       normalise(steering, total);
       this.sub2DVec(steering, this.position);
       this.sub2DVec(steering, this.velocity);
-      
-      let hypot = Math.hypot(steering.x, steering.y);
-      this.clamp(hypot, 0, this.maxForce);
     }
     return steering;
   }
 
   separation(boids) {
-    const currentBoidRotation = this.radians;
-    // get main boid's current direction:
-    // vecB:
-    let currentBoidDir = {
-      x: Math.cos(currentBoidRotation) * this.speed, 
-      y: Math.sin(currentBoidRotation) * this.speed,
-    };
-
     let steering = { x: 0, y: 0 };
     let total = 0;
 
@@ -178,28 +168,27 @@ export default class Boid {
         // - also gives us direction pointing from 'us' to the 'other' boid.
         //    - this is used to turn 'us' in opposite direction to 'other' boid.
         let diff = {
-          dx: this.position.x - other.position.x,
-          dy: this.position.y - other.position.y,
+          x: this.position.x - other.position.x,
+          y: this.position.y - other.position.y,
         };
         // distance between 2 boids:
-        const dst = Math.sqrt(diff.dx*diff.dx + diff.dy*diff.dy);
+        const dst = Math.hypot(diff.x, diff.y);
         
         // normalise vecA:
         normalise(diff, dst);
   
         // dot product between vecA and vecB:
-        let dp = dot(diff, currentBoidDir);
+        let dp = dot(diff, this.velocity);
   
         // check if boid is within other's radius:
         let isInsideRadius = dst < this.perceptionRadius;
         // check if boid comes within the view angle defined:
         let isInsideAngle = Math.abs(Math.acos(dp)) < this.perceptionArc;
-        this.isInsideArc = isInsideRadius && isInsideAngle;
+        let isInsideArc = isInsideRadius && isInsideAngle;
   
         // only true if boid is within other's radius AND perception arc:
-        if (this.isInsideArc) {
-          steering.x += diff.dx;
-          steering.y += diff.dy;
+        if (isInsideArc) {
+          this.add2DVec(steering, diff);
           total++;
         }
       }
@@ -208,24 +197,26 @@ export default class Boid {
     }
 
     if (total > 0) {
-      steering.x /= total;
-      steering.y /= total;
-
-      steering.x -= currentBoidDir.x;
-      steering.y -= currentBoidDir.y;
+      normalise(steering, total);
+      //this.sub2DVec(steering, this.velocity);
     }
     return steering;
   }
 
   update() {
-    // this.x += Math.cos(this.radians) * this.speed;
-    // this.y += Math.sin(this.radians) * this.speed;
-
-    // update position:
+    // update position based on velocity:
     this.add2DVec(this.position, this.velocity);
 
-    // update velocity:
+    // update velocity based on acceleration:
     this.add2DVec(this.velocity, this.acceleration);
+    //this.velocity.x = Math.cos(this.radians);
+    //this.velocity.y = Math.sin(this.radians);
+
+    this.velocity = this.clampVec(this.velocity, 0, this.maxSpeed);
+
+    // reset acceleration:
+    this.acceleration.x = 0;
+    this.acceleration.y = 0;
 
     // screen wrapping:
     // if boid goes off screen, wrap its position to the other side:
