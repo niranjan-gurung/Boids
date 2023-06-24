@@ -18,12 +18,11 @@ export default class Boid {
 
     /* tunable forces */
     // boid behaviour:
-    this.avoidForce = 0.01;    // separation force
-    this.alignForce = 0.000000000000000001;    // alignment force
+    this.avoidForce = 0.05;     // separation force
+    this.alignForce = 0.1;      // alignment force
     this.centerForce = 0.001;   // cohesion force
 
-    this.maxSpeed = 3.0;
-    this.maxForce = 0.1;
+    this.maxSpeed = 1.5;
 
     // generate random starting positions for boids:
     this.position = { 
@@ -46,12 +45,8 @@ export default class Boid {
     let cohesion = this.cohesion(boids);
 
     this.add2DVec(this.acceleration, alignment, this.alignForce);
-    // this.acceleration.x += alignment.x * this.alignForce;
-    // this.acceleration.y += alignment.y * this.alignForce;
-    // this.acceleration.x += separation.x * this.avoidForce;
-    // this.acceleration.y += separation.y * this.avoidForce;
-    // this.acceleration.x += cohesion.x * this.centerForce;
-    // this.acceleration.y += cohesion.y * this.centerForce;
+    this.add2DVec(this.acceleration, cohesion, this.centerForce);
+    this.add2DVec(this.acceleration, separation, this.avoidForce);
   }
 
   clampVec(num, min, max) {
@@ -198,7 +193,7 @@ export default class Boid {
 
     if (total > 0) {
       normalise(steering, total);
-      //this.sub2DVec(steering, this.velocity);
+      this.sub2DVec(steering, this.velocity);
     }
     return steering;
   }
