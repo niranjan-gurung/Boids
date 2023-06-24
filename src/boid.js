@@ -19,10 +19,10 @@ export default class Boid {
     /* tunable forces */
     // boid behaviour:
     this.avoidForce = 0.01;    // separation force
-    this.alignForce = 1.2;    // alignment force
+    this.alignForce = 0.000000000000000001;    // alignment force
     this.centerForce = 0.001;   // cohesion force
 
-    this.maxSpeed = 0.8;
+    this.maxSpeed = 3.0;
     this.maxForce = 0.1;
 
     // generate random starting positions for boids:
@@ -41,15 +41,13 @@ export default class Boid {
   }
 
   flock(boids) {
-    let separation = this.separation(boids);
     let alignment = this.alignment(boids);
+    let separation = this.separation(boids);
     let cohesion = this.cohesion(boids);
 
-    this.acceleration.x = alignment.x * this.alignForce;
-    this.acceleration.y = alignment.y * this.alignForce;
-    //this.turnAngle = Math.atan2(this.acceleration.y, this.acceleration.x);
-    this.turnAngle = Math.atan2(this.acceleration.y, this.acceleration.x);
-    this.radians += this.toRadians(this.turnAngle);
+    this.add2DVec(this.acceleration, alignment, this.alignForce);
+    // this.acceleration.x += alignment.x * this.alignForce;
+    // this.acceleration.y += alignment.y * this.alignForce;
     // this.acceleration.x += separation.x * this.avoidForce;
     // this.acceleration.y += separation.y * this.avoidForce;
     // this.acceleration.x += cohesion.x * this.centerForce;
@@ -211,10 +209,14 @@ export default class Boid {
 
     // update velocity based on acceleration:
     //this.add2DVec(this.velocity, this.acceleration);
-    this.velocity.x += Math.cos(this.radians);
-    this.velocity.y += Math.sin(this.radians);
+    this.velocity.x = Math.cos(this.radians) * this.maxSpeed;
+    this.velocity.y = Math.sin(this.radians) * this.maxSpeed;
 
-    this.velocity = this.clampVec(this.velocity, 0, this.maxSpeed);
+    this.turnAngle = this.toRadians(Math.atan2(this.acceleration.y, this.acceleration.x));
+    this.radians += this.turnAngle;
+
+    // limit to max speed:
+    //this.velocity = this.clampVec(this.velocity, 0, this.maxSpeed);
 
     // reset acceleration:
     this.acceleration.x = 0;
@@ -259,9 +261,9 @@ export default class Boid {
   }
 
   /*** helper methods: ***/
-  add2DVec(vec1, vec2) {
-    vec1.x += vec2.x; 
-    vec1.y += vec2.y;
+  add2DVec(vec1, vec2, scalar = 1) {
+    vec1.x += vec2.x * scalar; 
+    vec1.y += vec2.y * scalar;
   }
 
   sub2DVec(vec1, vec2) {
