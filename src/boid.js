@@ -44,14 +44,16 @@ export default class Boid {
     let separation = this.separation(boids);
     let alignment = this.alignment(boids);
     let cohesion = this.cohesion(boids);
-    this.acceleration.x += separation.x * this.avoidForce;
-    this.acceleration.y += separation.y * this.avoidForce;
-    // this.acceleration.x += alignment.x * this.alignForce;
-    // this.acceleration.y += alignment.y * this.alignForce;
-    this.acceleration.x += cohesion.x * this.centerForce;
-    this.acceleration.y += cohesion.y * this.centerForce;
-    // this.turnAngle = Math.atan2(this.acceleration.y, this.acceleration.x);
-    // this.radians += this.toRadians(this.turnAngle);
+
+    this.acceleration.x = alignment.x * this.alignForce;
+    this.acceleration.y = alignment.y * this.alignForce;
+    //this.turnAngle = Math.atan2(this.acceleration.y, this.acceleration.x);
+    this.turnAngle = Math.atan2(this.acceleration.y, this.acceleration.x);
+    this.radians += this.toRadians(this.turnAngle);
+    // this.acceleration.x += separation.x * this.avoidForce;
+    // this.acceleration.y += separation.y * this.avoidForce;
+    // this.acceleration.x += cohesion.x * this.centerForce;
+    // this.acceleration.y += cohesion.y * this.centerForce;
   }
 
   clampVec(num, min, max) {
@@ -208,9 +210,9 @@ export default class Boid {
     this.add2DVec(this.position, this.velocity);
 
     // update velocity based on acceleration:
-    this.add2DVec(this.velocity, this.acceleration);
-    //this.velocity.x = Math.cos(this.radians);
-    //this.velocity.y = Math.sin(this.radians);
+    //this.add2DVec(this.velocity, this.acceleration);
+    this.velocity.x += Math.cos(this.radians);
+    this.velocity.y += Math.sin(this.radians);
 
     this.velocity = this.clampVec(this.velocity, 0, this.maxSpeed);
 
