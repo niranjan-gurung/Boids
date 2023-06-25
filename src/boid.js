@@ -7,6 +7,7 @@ export default class Boid {
     this.speed = 1.2;
     this.width = 5,
     this.height = 7;
+    //this.radius = 5;
     this.perceptionRadius = 100;    // boid view angle radius
     this.perceptionArc = 2.0;
     this.turnAngle = 0.0;
@@ -18,22 +19,23 @@ export default class Boid {
 
     /* tunable forces */
     // boid behaviour:
-    this.avoidForce = 0.05;     // separation force
-    this.alignForce = 0.1;      // alignment force
-    this.centerForce = 0.001;   // cohesion force
+    this.avoidForce = 0.5;     // separation force
+    this.alignForce = 0.9;      // alignment force
+    this.centerForce = 0.1;   // cohesion force
 
-    this.maxSpeed = 1.5;
+    this.maxSpeed = 1.2;
+    this.maxForce = 0.5;
 
     // generate random starting positions for boids:
     this.position = { 
       x: this.getRandomNumber(0, canvasWidth),
-      y: this.getRandomNumber(0, canvasHeight),
+      y: this.getRandomNumber(0, canvasHeight)
     };
 
     // set velocity of each boid based on its direction:
     this.velocity = { 
-      x: Math.cos(this.radians),
-      y: Math.sin(this.radians) 
+      x: this.toRadians(this.getRandomNumber(-180, 180) * this.maxSpeed),
+      y: this.toRadians(this.getRandomNumber(-180, 180) * this.maxSpeed)
     };
 
     this.acceleration = { x: 0, y: 0 };
@@ -41,12 +43,12 @@ export default class Boid {
 
   flock(boids) {
     let alignment = this.alignment(boids);
-    let separation = this.separation(boids);
     let cohesion = this.cohesion(boids);
+    let separation = this.separation(boids);
 
-    this.add2DVec(this.acceleration, alignment, this.alignForce);
-    this.add2DVec(this.acceleration, cohesion, this.centerForce);
-    this.add2DVec(this.acceleration, separation, this.avoidForce);
+    this.add2DVec(this.acceleration, alignment);
+    this.add2DVec(this.acceleration, cohesion);
+    this.add2DVec(this.acceleration, separation);
   }
 
   clampVec(num, min, max) {
@@ -97,8 +99,17 @@ export default class Boid {
     }
 
     if (total > 0) {
+      // says normalise but it calculates average...
       normalise(steering, total);
+
+      // set vec magnitude to max speed - to avoid slowing down: 
+      let mag = Math.hypot(steering.x, steering.y);
+      setMag(steering, this.maxSpeed, mag);
+
       this.sub2DVec(steering, this.velocity);
+
+      // limits magnitude to a force (tunable to achieve stronger/weaker behaviour):
+      steering = this.clampVec(steering, -this.maxForce, this.maxForce);
     }
     return steering;
   }
@@ -147,6 +158,13 @@ export default class Boid {
       normalise(steering, total);
       this.sub2DVec(steering, this.position);
       this.sub2DVec(steering, this.velocity);
+
+      // set vec magnitude to max speed - to avoid slowing down: 
+      let mag = Math.hypot(steering.x, steering.y);
+      setMag(steering, this.maxSpeed, mag);
+
+      // limits magnitude to a force (tunable to achieve stronger/weaker behaviour):
+      steering = this.clampVec(steering, -this.maxForce, this.maxForce);
     }
     return steering;
   }
@@ -194,6 +212,13 @@ export default class Boid {
     if (total > 0) {
       normalise(steering, total);
       this.sub2DVec(steering, this.velocity);
+      
+      // set vec magnitude to max speed - to avoid slowing down:
+      let mag = Math.hypot(steering.x, steering.y);
+      setMag(steering, this.maxSpeed, mag);
+
+      // limits magnitude to a force (tunable to achieve stronger/weaker behaviour):
+      steering = this.clampVec(steering, -this.maxForce, this.maxForce);
     }
     return steering;
   }
@@ -203,15 +228,15 @@ export default class Boid {
     this.add2DVec(this.position, this.velocity);
 
     // update velocity based on acceleration:
-    //this.add2DVec(this.velocity, this.acceleration);
-    this.velocity.x = Math.cos(this.radians) * this.maxSpeed;
-    this.velocity.y = Math.sin(this.radians) * this.maxSpeed;
-
-    this.turnAngle = this.toRadians(Math.atan2(this.acceleration.y, this.acceleration.x));
-    this.radians += this.turnAngle;
-
+    this.add2DVec(this.velocity, this.acceleration);
+    // this.velocity.x = Math.cos(this.radians) * this.maxSpeed;
+    // this.velocity.y = Math.sin(this.radians) * this.maxSpeed;
+    
+    // this.turnAngle = this.toRadians(Math.atan2(this.velocity.y, this.velocity.x));
+    // this.radians += this.turnAngle;
+    
     // limit to max speed:
-    //this.velocity = this.clampVec(this.velocity, 0, this.maxSpeed);
+    this.velocity = this.clampVec(this.velocity, -this.maxSpeed, this.maxSpeed);
 
     // reset acceleration:
     this.acceleration.x = 0;
@@ -225,6 +250,13 @@ export default class Boid {
     // vertical wrap:
     if      (this.position.y + this.height < 0)            this.position.y = canvasHeight + this.height;
     else if (this.position.y - this.height > canvasHeight) this.position.y = 0 - this.height;
+
+    // screen wrapping for circles:
+    // if      (this.position.x + this.radius < 0)           this.position.x = canvasWidth + this.radius;
+    // else if (this.position.x - this.radius > canvasWidth) this.position.x = 0 - this.radius;
+    // // vertical wrap:
+    // if      (this.position.y + this.radius < 0)            this.position.y = canvasHeight + this.radius;
+    // else if (this.position.y - this.radius > canvasHeight) this.position.y = 0 - this.radius;
   }
     
   draw(ctx) {
@@ -243,10 +275,14 @@ export default class Boid {
 
     // the boid:
     ctx.beginPath();
+    
+    //ctx.arc(0, 0, this.radius, 0, 2 * Math.PI, false);
+
     ctx.moveTo(this.height, 0);
     ctx.lineTo(-this.height, this.width);
     ctx.lineTo(-this.height, -this.width);
     ctx.closePath();
+
     if (this.target)
       ctx.fillStyle = 'red';
     else 
@@ -282,6 +318,11 @@ export default class Boid {
 // utility functions:
 function normalise(vec, dst) {
   vec.x /= dst, vec.y /= dst;
+}
+
+function setMag(vec, newMag, currMag) {
+  vec.x = vec.x * newMag / currMag;
+  vec.y = vec.y * newMag / currMag;
 }
 
 function dot(vec1, vec2) {
