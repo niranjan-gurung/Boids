@@ -5,26 +5,24 @@ export default class Boid {
   // setup each point of triangle
   constructor() {
     this.speed = 1.2;
-    this.width = 5,
+    this.width = 5;
     this.height = 7;
-    //this.radius = 5;
     this.perceptionRadius = 100;    // boid view angle radius
     this.perceptionArc = 2.0;
     this.turnAngle = 0.0;
     this.target = false;
 
     // boid will be facing random direction: 
-    this.angle = this.getRandomNumber(-45, 315);
+    this.angle = this.getRandomNumber(0, 360);
     this.radians = this.toRadians(this.angle);
 
     /* tunable forces */
     // boid behaviour:
-    this.avoidForce = 0.5;     // separation force
-    this.alignForce = 0.9;      // alignment force
-    this.centerForce = 0.1;   // cohesion force
+    this.avoidForce = 0.06;     // separation force
+    this.alignForce = 0.08;      // alignment force
+    this.centerForce = 0.02;   // cohesion force
 
-    this.maxSpeed = 1.2;
-    this.maxForce = 0.5;
+    this.maxSpeed = 3.0;
 
     // generate random starting positions for boids:
     this.position = { 
@@ -34,11 +32,14 @@ export default class Boid {
 
     // set velocity of each boid based on its direction:
     this.velocity = { 
-      x: this.toRadians(this.getRandomNumber(-180, 180) * this.maxSpeed),
-      y: this.toRadians(this.getRandomNumber(-180, 180) * this.maxSpeed)
+      x: this.toRadians(this.getRandomNumber(-180, 180)) * this.maxSpeed,
+      y: this.toRadians(this.getRandomNumber(-180, 180)) * this.maxSpeed
     };
 
-    this.acceleration = { x: 0, y: 0 };
+    this.acceleration = { 
+      x: this.toRadians(this.getRandomNumber(-180, 180)) * this.maxSpeed, 
+      y: this.toRadians(this.getRandomNumber(-180, 180)) * this.maxSpeed
+    };
   }
 
   flock(boids) {
@@ -56,6 +57,10 @@ export default class Boid {
       x: Math.max(min, Math.min(num.x, max)), 
       y: Math.max(min, Math.min(num.y, max)) 
     };
+  }
+
+  clamp(num, min, max) {
+    return Math.max(min, Math.min(num, max));
   }
 
   alignment(boids) {
@@ -105,11 +110,11 @@ export default class Boid {
       // set vec magnitude to max speed - to avoid slowing down: 
       let mag = Math.hypot(steering.x, steering.y);
       setMag(steering, this.maxSpeed, mag);
-
+      
       this.sub2DVec(steering, this.velocity);
-
+      
       // limits magnitude to a force (tunable to achieve stronger/weaker behaviour):
-      steering = this.clampVec(steering, -this.maxForce, this.maxForce);
+      steering = this.clampVec(steering, -this.alignForce, this.alignForce);
     }
     return steering;
   }
@@ -164,7 +169,7 @@ export default class Boid {
       setMag(steering, this.maxSpeed, mag);
 
       // limits magnitude to a force (tunable to achieve stronger/weaker behaviour):
-      steering = this.clampVec(steering, -this.maxForce, this.maxForce);
+      steering = this.clampVec(steering, -this.centerForce, this.centerForce);
     }
     return steering;
   }
@@ -218,7 +223,7 @@ export default class Boid {
       setMag(steering, this.maxSpeed, mag);
 
       // limits magnitude to a force (tunable to achieve stronger/weaker behaviour):
-      steering = this.clampVec(steering, -this.maxForce, this.maxForce);
+      steering = this.clampVec(steering, -this.avoidForce, this.avoidForce);
     }
     return steering;
   }
@@ -229,11 +234,9 @@ export default class Boid {
 
     // update velocity based on acceleration:
     this.add2DVec(this.velocity, this.acceleration);
-    // this.velocity.x = Math.cos(this.radians) * this.maxSpeed;
-    // this.velocity.y = Math.sin(this.radians) * this.maxSpeed;
     
-    // this.turnAngle = this.toRadians(Math.atan2(this.velocity.y, this.velocity.x));
-    // this.radians += this.turnAngle;
+    this.turnAngle = Math.atan2(this.velocity.y, this.velocity.x);
+    this.radians = this.turnAngle;
     
     // limit to max speed:
     this.velocity = this.clampVec(this.velocity, -this.maxSpeed, this.maxSpeed);
@@ -292,9 +295,9 @@ export default class Boid {
   }
 
   /*** helper methods: ***/
-  add2DVec(vec1, vec2, scalar = 1) {
-    vec1.x += vec2.x * scalar; 
-    vec1.y += vec2.y * scalar;
+  add2DVec(vec1, vec2) {
+    vec1.x += vec2.x; 
+    vec1.y += vec2.y;
   }
 
   sub2DVec(vec1, vec2) {
